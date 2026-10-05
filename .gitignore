@@ -1,5 +1,5 @@
 .vscode
-.devcontainer
+# .devcontainer
 .github
 .env
 .idea

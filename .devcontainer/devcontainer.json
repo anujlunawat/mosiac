@@ -1,0 +1,86 @@
+{
+  "name": "CollabDocs Dev",
+
+  // Use the existing docker-compose.yml (postgres + redis) and
+  // layer the dev container on top via a separate override file.
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.devcontainer.yml"],
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+
+  // Forward all service ports to the host
+  "forwardPorts": [
+    5173,   // Vite frontend
+    8000,   // FastAPI backend
+    5432,   // PostgreSQL
+    6379    // Redis
+  ],
+
+  "portsAttributes": {
+    "5173": { "label": "Frontend (Vite)",  "onAutoForward": "openBrowser" },
+    "8000": { "label": "Backend (FastAPI)", "onAutoForward": "notify" },
+    "5432": { "label": "PostgreSQL",        "onAutoForward": "silent" },
+    "6379": { "label": "Redis",             "onAutoForward": "silent" }
+  },
+
+  // Runs once after the container is created
+  "postCreateCommand": "pip install -r backend/requirements.txt && cd frontend && npm install",
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // ── Python ────────────────────────────────────
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.isort",
+        "charliermarsh.ruff",          // fast Python linter
+
+        // ── Frontend ──────────────────────────────────
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",   // not used but harmless
+        "formulahendry.auto-rename-tag",
+
+        // ── Database ──────────────────────────────────
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",     // SQLTools PostgreSQL driver
+        "cweijan.vscode-redis-client", // Redis viewer
+
+        // ── Docker / DevOps ───────────────────────────
+        "ms-azuretools.vscode-docker",
+
+        // ── General ───────────────────────────────────
+        "eamodio.gitlens",
+        "usernamehw.errorlens",        // inline error display
+        "christian-kohler.path-intellisense"
+      ],
+      "settings": {
+        // Python
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true
+        },
+        "isort.args": ["--profile", "black"],
+
+        // TypeScript / JS
+        "[typescript]":     { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+        "[typescriptreact]":{ "editor.defaultFormatter": "esbenp.prettier-vscode" },
+        "editor.formatOnSave": true,
+
+        // SQLTools — pre-configured PostgreSQL connection
+        "sqltools.connections": [
+          {
+            "name": "CollabDocs (local)",
+            "driver": "PostgreSQL",
+            "host": "postgres",
+            "port": 5432,
+            "database": "collabdocs",
+            "username": "collabdocs",
+            "password": "secret"
+          }
+        ]
+      }
+    }
+  }
+}

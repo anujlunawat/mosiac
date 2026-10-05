@@ -1,3 +1,4 @@
+from __future__ import annotations
 from sqlalchemy import select, update, insert, delete
 from typing import TYPE_CHECKING
 

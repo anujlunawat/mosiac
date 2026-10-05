@@ -1,0 +1,30 @@
+# ── Web framework ─────────────────────────────────────────────────────────────
+fastapi==0.141.1
+uvicorn[standard]==0.53.0      # ASGI server (runs FastAPI)
+
+# ── Database ──────────────────────────────────────────────────────────────────
+sqlalchemy[asyncio]==2.0.54    # ORM (async)
+asyncpg==0.31.0                # async PostgreSQL driver (used by SQLAlchemy)
+alembic==1.20.0                # database migrations
+
+# ── Redis ─────────────────────────────────────────────────────────────────────
+redis[hiredis]==8.1.0         # async Redis client
+
+# ── Auth ──────────────────────────────────────────────────────────────────────
+python-jose[cryptography]==3.5.0  # JWT creation & validation
+passlib[bcrypt]==1.7.4            # password hashing (bcrypt)
+python-multipart==0.0.32           # needed for OAuth2PasswordRequestForm
+pwdlib[argon2]==0.3.1
+
+# ── Real-time / CRDT ──────────────────────────────────────────────────────────
+pycrdt==0.14.6                 # Python bindings to Rust yrs (same core as Yjs)
+pycrdt-websocket==0.16.5       # WebSocket server that speaks the Yjs binary protocol
+
+# ── Config ────────────────────────────────────────────────────────────────────
+pydantic-settings==2.15.0 
+email-validator==2.3.0      # reads .env into Python settings class
+
+# ── Dev / Test ────────────────────────────────────────────────────────────────
+pytest==9.1.1
+pytest-asyncio==1.4.0
+httpx==0.28.1                  # async HTTP client for tests

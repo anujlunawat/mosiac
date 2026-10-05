@@ -1,0 +1,11 @@
+.vscode
+.devcontainer
+.github
+.env
+.idea
+
+docs
+tmp.py
+tmp.ipynb
+*tmp.*
+test.*

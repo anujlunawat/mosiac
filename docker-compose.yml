@@ -1,0 +1,109 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# CollabDocs — Local Development Services
+#
+# Run:   docker-compose up -d
+# Stop:  docker-compose down
+# Wipe:  docker-compose down -v   (deletes all data volumes)
+#
+# What runs in Docker:
+#   postgres  — primary database  (users, documents, Yjs snapshots)
+#   redis     — real-time state   (Yjs live doc, Pub/Sub, sessions)
+#
+# What runs OUTSIDE Docker (during dev):
+#   frontend  — npm run dev   (http://localhost:5173)
+#   backend   — uvicorn       (http://localhost:8000)
+# ──────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ── PostgreSQL ──────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: collab_postgres
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432" # connect from host: postgresql://collabdocs:secret@localhost:5432/collabdocs
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql:ro # runs once on first start
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-collabdocs}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  # ── Redis ───────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: collab_redis
+    restart: unless-stopped
+    command: >
+      redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: collab_backend:latest
+    container_name: collab_backend
+    depends_on:
+      - redis
+      - postgres
+    ports:
+      - "8000:8000"
+      # - "9000:9000"
+    volumes:
+      - ./backend:/backend
+    working_dir: /backend
+    # command: sleep infinity
+    command: [ "python3", "run.py" ]
+    env_file:
+      - .env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/" ]
+      # this command runs from inside the container
+      # so docker does: docker exec <container-id> curl -f http://localhost:8000/
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s # this means, ignore the health checks in the first 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: collab_frontend:latest
+    container_name: collab_frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    environment:
+      - BACKEND_HOST=localhost
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost" ]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+# ── Named volumes ─────────────────
+volumes:
+  postgres_data:
+  redis_data:

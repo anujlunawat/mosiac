@@ -218,7 +218,6 @@ class AuthService:
             max_age=int(config.REFRESH_TTL.total_seconds()),
             httponly=True,  # JS cant read; XSS cant steal
             secure=config.COOKIE_SECURE,
-            secure=False,
             samesite="lax",  # CSRF
             path=config.COOKIE_PATH,
         )
